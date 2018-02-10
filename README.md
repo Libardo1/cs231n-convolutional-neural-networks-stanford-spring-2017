@@ -1,7 +1,7 @@
 # CS231n: Convolutional Neural Networks for Visual Recognition
 This repository is the collection of solutions to the problem sets in Stanford
 University's CS231n course from Spring 2017. The `assignments` directory of the
-source tree includes the original bare problem sets. The `src` directory contains my solutions. The `datasets` directory contains compressed archives of the data sets used in the problem sets.
+source tree includes the original bare problem sets. The `src` directory contains my solutions. The `datasets` directory contains compressed archives of the data sets used in the problem sets. The `lectures` directory contains the contents of the accompanying course website for Spring 2017. Licensing information, etc. is stored with the website inside the corresponding `7zip` archive.
 
 ## Assignemnt Setup
 Each assignment has its own setup instructions. Here I am assuming that you are running the machine learning pipelines locally. If you want to do it remotely on something like Google Cloud or Amazon Web Services, you should see the original CS231 lectures for that.
