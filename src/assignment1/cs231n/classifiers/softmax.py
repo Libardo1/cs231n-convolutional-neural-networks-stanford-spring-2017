@@ -30,7 +30,32 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  
+  num_train = X.shape[0]
+  scores = X.dot(W)
+  # Normalize the scores to avoid numerical stability problems with exponentiation.
+  # Normalize with max as zero.
+  exp_scores = np.exp(scores - np.max(scores, axis=1, keepdims=True))
+  probs = exp_scores/np.sum(exp_scores,axis=1,keepdims=True)
+  loss = -np.sum(np.log(probs[np.arange(num_train),y]))
+
+  # Compute the average off the losses.
+  loss /= num_train
+
+  # Add regularization
+  loss += 0.5 * reg * np.sum(W*W)
+
+  # Compute the gradient.
+  # gradWy=X(Si-1)
+  # gradWj=SjX
+  dprobs = probs
+  dprobs[np.arange(num_train), y] -= 1
+  dW = X.T.dot(dprobs)
+  dW /= num_train
+
+  # Gradient regularization.
+  dW += reg * W
+  
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +79,32 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  
+  num_train = X.shape[0]
+  scores = X.dot(W)
+  # Normalize the scores to avoid numerical stability problems with exponentiation.
+  # Normalize with max as zero.
+  exp_scores = np.exp(scores - np.max(scores, axis=1, keepdims=True))
+  probs = exp_scores/np.sum(exp_scores,axis=1,keepdims=True)
+  loss = -np.sum(np.log(probs[np.arange(num_train),y]))
+
+  # Compute the average off the losses.
+  loss /= num_train
+
+  # Add regularization
+  loss += 0.5 * reg * np.sum(W*W)
+
+  # Compute the gradient.
+  # gradWy=X(Si-1)
+  # gradWj=SjX
+  dprobs = probs
+  dprobs[np.arange(num_train), y] -= 1
+  dW = X.T.dot(dprobs)
+  dW /= num_train
+
+  # Gradient regularization.
+  dW += reg * W
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
