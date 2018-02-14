@@ -10,7 +10,7 @@ class ThreeLayerConvNet(object):
     """
     A three-layer convolutional network with the following architecture:
 
-    conv - relu - 2x2 max pool - affine - relu - affine - softmax
+    conv -> relu -> 2x2 max pool -> affine -> relu -> affine -> softmax
 
     The network operates on minibatches of data that have shape (N, C, H, W)
     consisting of N images, each with height H and width W and with C input
@@ -48,7 +48,22 @@ class ThreeLayerConvNet(object):
         # hidden affine layer, and keys 'W3' and 'b3' for the weights and biases   #
         # of the output affine layer.                                              #
         ############################################################################
-        pass
+        C, H, W = input_dim
+
+        pool_param = {'pool_height': 2, 'pool_width': 2, 'stride': 2}
+        HP = (H - pool_param['pool_height']) // pool_param['stride'] + 1
+        WP = (W - pool_param['pool_width']) // pool_param['stride'] + 1
+
+        weights_dim = [(num_filters, C, filter_size, filter_size),
+                        (HP * WP * num_filters, hidden_dim),
+                        (hidden_dim, num_classes)]
+        biases_dim = [num_filters, hidden_dim, num_classes]
+
+        # Initialize the weights and biases.
+        for i in range(1, 4):
+            self.params[f'W{i}'] = np.random.normal(loc=0.0, scale=weight_scale,
+                                                    size=weights_dim[i - 1])
+            self.params[f'b{i}'] = np.zeros(biases_dim[i - 1])
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -80,7 +95,23 @@ class ThreeLayerConvNet(object):
         # computing the class scores for X and storing them in the scores          #
         # variable.                                                                #
         ############################################################################
-        pass
+        # Convolution pass.
+        conv_out, conv_cache = conv_forward_fast(X, W1, b1, conv_param)
+
+        # ReLU activation function.
+        conv_relu, conv_relu_cache = relu_forward(conv_out)
+
+        # Max pooling layer.
+        max_out, max_cache = max_pool_forward_fast(conv_relu, pool_param)
+
+        # Affine forward.
+        affine_out, affine_cache = affine_forward(max_out, W2, b2)
+
+        # ReLU affine.
+        affine_relu, affine_relu_cache = relu_forward(affine_out)
+
+        # Compute scores.
+        scores, scores_cache = affine_forward(affine_relu, W3, b3)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -95,7 +126,35 @@ class ThreeLayerConvNet(object):
         # data loss using softmax, and make sure that grads[k] holds the gradients #
         # for self.params[k]. Don't forget to add L2 regularization!               #
         ############################################################################
-        pass
+        
+        # Compute softmax loss and softmax gradient.
+        loss, dout = softmax_loss(scores, y)
+
+        # Add L2 regularization.
+        loss += 0.5 * self.reg * (np.sum(W1 * W1) + np.sum(W2 * W2) + np.sum(W3 * W3))
+
+        # Backprop through affine layer.
+        daffine, grads['W3'], grads['b3'] = affine_backward(dout, scores_cache)
+
+        # Backprop through ReLU activation.
+        daffine_relu = relu_backward(daffine, affine_relu_cache)
+
+        # Backprop through affine layer.
+        daffine, grads['W2'], grads['b2'] = affine_backward(daffine_relu, affine_cache)
+
+        # Backprop through the max pool layer.
+        dmax_pool = max_pool_backward_fast(daffine, max_cache)
+
+        # Backprop through ReLU.
+        dX = relu_backward(dmax_pool, conv_relu_cache)
+
+        # Backward through convnet.
+        dX, grads['W1'], grads['b1'] = conv_backward_fast(dX, conv_cache)
+
+        # Add regularization to the gradients
+        grads['W3'] += self.reg * W3
+        grads['W2'] += self.reg * W2
+        grads['W1'] += self.reg * W1
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

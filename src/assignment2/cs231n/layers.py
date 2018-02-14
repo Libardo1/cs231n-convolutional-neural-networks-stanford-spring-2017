@@ -512,7 +512,8 @@ def max_pool_forward_naive(x, pool_param):
     # Translate filters across the input
     for j in range(H_filter):
         for k in range(W_filter):
-            out[:,:,j,k] = (x[:,:,j*stride:(j*stride+pool_height), k*stride:(k*stride+pool_width)].max(axis=(2,3)))
+            out[:,:,j,k] = np.max(x[:,:,j*stride:(j*stride+pool_height), k*stride:(k*stride+pool_width)], axis=(2,3))
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -598,7 +599,15 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     # version of batch normalization defined above. Your implementation should#
     # be very short; ours is less than five lines.                            #
     ###########################################################################
-    pass
+    # We transpose to get channels as last dim and then reshape to size (-1, C) so we can use normal batchnorm.
+    x_t = x.transpose((0, 2, 3, 1))
+    x_flat = x_t.reshape(-1, x.shape[1])
+
+    out, cache = batchnorm_forward(x_flat, gamma, beta, bn_param)
+
+    # Reshape our results back to our desired shape.
+    out_reshaped = out.reshape(*x_t.shape)
+    out = out_reshaped.transpose((0, 3, 1, 2))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -628,7 +637,15 @@ def spatial_batchnorm_backward(dout, cache):
     # version of batch normalization defined above. Your implementation should#
     # be very short; ours is less than five lines.                            #
     ###########################################################################
-    pass
+    # We transpose to get channels as last dim and then reshape to size (-1, C) so we can use normal batchnorm.
+    dout_t = dout.transpose((0, 2, 3, 1))
+    dout_flat = dout_t.reshape(-1, dout.shape[1])
+
+    dx, dgamma, dbeta = batchnorm_backward(dout_flat, cache)
+
+    # We need to reshape dx back to our desired shape.
+    dx_reshaped = dx.reshape(*dout_t.shape)
+    dx = dx_reshaped.transpose((0, 3, 1, 2))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -660,6 +677,7 @@ def svm_loss(x, y):
     dx[margins > 0] = 1
     dx[np.arange(N), y] -= num_pos
     dx /= N
+
     return loss, dx
 
 
@@ -686,4 +704,5 @@ def softmax_loss(x, y):
     dx = probs.copy()
     dx[np.arange(N), y] -= 1
     dx /= N
+
     return loss, dx
